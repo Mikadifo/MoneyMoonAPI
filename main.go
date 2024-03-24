@@ -1,30 +1,23 @@
 package main
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
-	"log"
+	"mikadifo/money-moon/models"
+	"mikadifo/money-moon/utily"
 	"net/http"
-	"os"
+
+	"github.com/gin-gonic/gin"
 )
-
-func getEnvVar(key string) string {
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
-
-	return os.Getenv(key)
-}
 
 func ping(c *gin.Context) {
 	c.IndentedJSON(http.StatusOK, gin.H{"message": "Hello!"})
 }
 
 func main() {
+	PORT := utily.GetEnvVar("PORT")
+
 	router := gin.Default()
 	router.GET("/", ping)
+	router.GET("/transactions", models.GetAllTransactions)
 
-	router.Run("localhost:" + getEnvVar("PORT"))
+	router.Run("localhost:" + PORT)
 }

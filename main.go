@@ -17,7 +17,7 @@ func main() {
 
 	router := gin.Default()
 	router.GET("/", ping)
-	router.GET("/transactions", models.GetAllTransactions)
+	router.GET("/transactions/:bankId", models.GetAllTransactionsByBankId)
 
 	router.Run("localhost:" + PORT)
 }

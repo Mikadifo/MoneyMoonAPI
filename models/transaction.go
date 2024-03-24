@@ -18,8 +18,10 @@ type Transaction struct {
 	date        string  `json:"date"`
 }
 
-func GetAllTransactions(c *gin.Context) {
-	cursor, err := config.MongoClient.Database("MoneyMoon").Collection("Transactions").Find(context.TODO(), bson.D{{}})
+func GetAllTransactionsByBankId(c *gin.Context) {
+	bankId := c.Param("bankId")
+
+	cursor, err := config.MongoClient.Database("MoneyMoon").Collection("Transactions").Find(context.TODO(), bson.D{{Key: "bankId", Value: bankId}})
 
 	if err != nil {
 		c.IndentedJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

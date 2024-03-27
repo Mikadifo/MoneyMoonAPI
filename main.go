@@ -1,7 +1,8 @@
 package main
 
 import (
-	"mikadifo/money-moon/models"
+	"mikadifo/money-moon/config"
+	"mikadifo/money-moon/routes"
 	"mikadifo/money-moon/utily"
 	"net/http"
 
@@ -16,8 +17,11 @@ func main() {
 	PORT := utily.GetEnvVar("PORT")
 
 	router := gin.Default()
+	config.ConnectDB()
+
 	router.GET("/", ping)
-	router.GET("/transactions/:bankId", models.GetAllTransactionsByBankId)
+	routes.UserRoute(router)
+	routes.TransactionRoute(router)
 
 	router.Run("localhost:" + PORT)
 }

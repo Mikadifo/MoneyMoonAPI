@@ -1,9 +1,9 @@
 package models
 
 type Debt struct {
-	id          string  `json:"id"`
-	name        string  `json:"name"`
-	description string  `json:"description"`
-	amount      float32 `json:"amount"`
-	payed       float32 `json:"payed"`
+	Id          string  `bson:"id,omitempty"`
+	Name        string  `bson:"name,omitempty" validate:"required"`
+	Description string  `bson:"description,omitempty" validate:"required"`
+	Amount      float64 `bson:"amount,omitempty" validate:"required"`
+	Payed       float64 `bson:"payed,omitempty" validate:"required"`
 }

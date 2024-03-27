@@ -1,6 +1,6 @@
 package models
 
 type Bank struct {
-	_id  string `json:"_id"`
-	name string `json:"name"`
+	Id   string `bson:"_id,omitempty"`
+	Name string `bson:"name,omitempty" validate:"required"`
 }

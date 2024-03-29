@@ -47,6 +47,7 @@ func CreateUser(c *gin.Context) {
 		Username: user.Username,
 		Email:    user.Email,
 		Password: user.Password,
+		Banks:    []string{},
 		Debts:    []models.Debt{},
 	}
 
@@ -57,6 +58,24 @@ func CreateUser(c *gin.Context) {
 	}
 
 	c.IndentedJSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
+}
+
+func GetUserByEmail(c *gin.Context) {
+	var user models.User
+	email := c.Param("email")
+
+	user, err := getUserByEmail(email)
+	if err != nil {
+		c.IndentedJSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		return
+	}
+
+	if user.Email != email {
+		c.IndentedJSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "User with email " + email + " not found."}})
+		return
+	}
+
+	c.IndentedJSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": user}})
 }
 
 func getUserByEmail(email string) (models.User, error) {

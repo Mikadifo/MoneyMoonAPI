@@ -9,5 +9,6 @@ type User struct {
 	Username string             `bson:"username,omitempty" validate:"required"`
 	Email    string             `bson:"email,omitempty" validate:"required"`
 	Password string             `bson:"password,omitempty" validate:"required"`
+	Banks    []string           `bson:"banks"`
 	Debts    []Debt             `bson:"debts"`
 }

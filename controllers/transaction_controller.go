@@ -9,13 +9,11 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 var transactionsCollection *mongo.Collection = config.GetCollection(config.MongoClient, "Transactions")
-var validate = validator.New()
 
 func GetAllTransactionsByBankId(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

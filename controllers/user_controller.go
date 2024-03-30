@@ -23,23 +23,23 @@ func CreateUser(c *gin.Context) {
 	defer cancel()
 
 	if err := c.BindJSON(&user); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 
 	if validationError := validate.Struct(&user); validationError != nil {
-		c.IndentedJSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationError.Error()}})
+		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationError.Error()}})
 		return
 	}
 
 	newUser, err := getUserByEmail(user.Email)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 
 	if newUser.Email == user.Email {
-		c.IndentedJSON(http.StatusConflict, responses.UserResponse{Status: http.StatusConflict, Message: "error", Data: map[string]interface{}{"data": "User already exists with the following email: " + user.Email}})
+		c.IndentedJSON(http.StatusConflict, responses.DefaultResponse{Status: http.StatusConflict, Message: "error", Data: map[string]interface{}{"data": "User already exists with the following email: " + user.Email}})
 		return
 	}
 
@@ -53,11 +53,11 @@ func CreateUser(c *gin.Context) {
 
 	result, err := userCollection.InsertOne(ctx, newUser)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 
-	c.IndentedJSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
+	c.IndentedJSON(http.StatusCreated, responses.DefaultResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
 }
 
 func Login(c *gin.Context) {
@@ -67,22 +67,22 @@ func Login(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&body); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 
 	user, err := getUserByEmail(body.Email)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 
 	if user.Email != body.Email || user.Password != body.Password {
-		c.IndentedJSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Email or password incorrect."}})
+		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Email or password incorrect."}})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": user}})
+	c.IndentedJSON(http.StatusOK, responses.DefaultResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": user}})
 
 }
 
@@ -92,16 +92,16 @@ func GetUserByEmail(c *gin.Context) {
 
 	user, err := getUserByEmail(email)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
 		return
 	}
 
 	if user.Email != email {
-		c.IndentedJSON(http.StatusNotFound, responses.UserResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "User with email " + email + " not found."}})
+		c.IndentedJSON(http.StatusNotFound, responses.DefaultResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "User with email " + email + " not found."}})
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": user}})
+	c.IndentedJSON(http.StatusOK, responses.DefaultResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": user}})
 }
 
 func getUserByEmail(email string) (models.User, error) {

@@ -22,6 +22,7 @@ func main() {
 	router.GET("/", ping)
 	routes.UserRoute(router)
 	routes.TransactionRoute(router)
+	routes.BankRoute(router)
 
 	router.Run("localhost:" + PORT)
 }

@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"mikadifo/money-moon/controllers"
+	"mikadifo/money-moon/src/controllers"
 
 	"github.com/gin-gonic/gin"
 )

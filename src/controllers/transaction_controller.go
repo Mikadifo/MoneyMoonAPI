@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"context"
-	"mikadifo/money-moon/config"
-	"mikadifo/money-moon/models"
-	"mikadifo/money-moon/responses"
+	"mikadifo/money-moon/src/config"
+	"mikadifo/money-moon/src/models"
+	"mikadifo/money-moon/src/responses"
 	"net/http"
 	"time"
 

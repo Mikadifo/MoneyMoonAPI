@@ -1,9 +1,9 @@
 package main
 
 import (
-	"mikadifo/money-moon/config"
-	"mikadifo/money-moon/routes"
-	"mikadifo/money-moon/utily"
+	"mikadifo/money-moon/src/config"
+	"mikadifo/money-moon/src/routes"
+	"mikadifo/money-moon/src/utily"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

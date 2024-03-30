@@ -8,4 +8,5 @@ import (
 
 func BankRoute(router *gin.Engine) {
 	router.POST("/bank/create", controllers.CreateBank)
+	router.GET("/bank/:bankId", controllers.GetBankByID)
 }

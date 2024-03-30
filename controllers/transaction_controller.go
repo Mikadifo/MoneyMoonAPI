@@ -23,14 +23,18 @@ func GetAllTransactionsByBankId(c *gin.Context) {
 
 	cursor, err := transactionsCollection.Find(ctx, bson.M{"bankId": bankId})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
 	if err = cursor.All(ctx, &transactions); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, responses.DefaultResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": transactions}})
+	if transactions == nil {
+		transactions = []models.Transaction{}
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, transactions)
 }

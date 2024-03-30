@@ -23,40 +23,40 @@ func CreateBank(c *gin.Context) {
 	defer cancel()
 
 	if err := c.BindJSON(&bank); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
 		return
 	}
 
 	if validationError := validate.Struct(&bank); validationError != nil {
-		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationError.Error()}})
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, validationError.Error())
 		return
 	}
 
 	cursor, err := bankCollection.Find(ctx, bson.M{"userId": bank.UserId})
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
 	if err = cursor.All(ctx, &banks); err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
 	for _, bankObj := range banks {
 		if bankObj.Name == bankObj.Name {
-			c.IndentedJSON(http.StatusConflict, responses.DefaultResponse{Status: http.StatusConflict, Message: "error", Data: map[string]interface{}{"data": "Bank with name " + bank.Name + " already exists"}})
+			responses.Send(c, http.StatusConflict, responses.ERROR, "Bank with name "+bank.Name+" already exists")
 			return
 		}
 	}
 
 	result, err := bankCollection.InsertOne(ctx, bank)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
-	c.IndentedJSON(http.StatusCreated, responses.DefaultResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
+	responses.Send(c, http.StatusCreated, responses.SUCCESS, result)
 }
 
 func GetBankByID(c *gin.Context) {
@@ -67,20 +67,20 @@ func GetBankByID(c *gin.Context) {
 
 	objId, err := primitive.ObjectIDFromHex(bankId)
 	if err != nil {
-		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Bank id is not valid."}})
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, "Bank id is not valid.")
 		return
 	}
 
 	err = bankCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&bank)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.IndentedJSON(http.StatusNotFound, responses.DefaultResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "Bank not found."}})
+			responses.Send(c, http.StatusNotFound, responses.ERROR, "Bank not found.")
 			return
 
 		}
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, responses.DefaultResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": bank}})
+	responses.Send(c, http.StatusOK, responses.SUCCESS, bank)
 }

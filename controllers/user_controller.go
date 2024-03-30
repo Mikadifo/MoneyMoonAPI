@@ -23,23 +23,23 @@ func CreateUser(c *gin.Context) {
 	defer cancel()
 
 	if err := c.BindJSON(&user); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
 		return
 	}
 
 	if validationError := validate.Struct(&user); validationError != nil {
-		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": validationError.Error()}})
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, validationError.Error())
 		return
 	}
 
 	newUser, err := getUserByEmail(user.Email)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
 	if newUser.Email == user.Email {
-		c.IndentedJSON(http.StatusConflict, responses.DefaultResponse{Status: http.StatusConflict, Message: "error", Data: map[string]interface{}{"data": "User already exists with the following email: " + user.Email}})
+		responses.Send(c, http.StatusConflict, responses.ERROR, "User already exists with the following email: "+user.Email)
 		return
 	}
 
@@ -53,11 +53,11 @@ func CreateUser(c *gin.Context) {
 
 	result, err := userCollection.InsertOne(ctx, newUser)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
-	c.IndentedJSON(http.StatusCreated, responses.DefaultResponse{Status: http.StatusCreated, Message: "success", Data: map[string]interface{}{"data": result}})
+	responses.Send(c, http.StatusCreated, responses.SUCCESS, result)
 }
 
 func Login(c *gin.Context) {
@@ -67,23 +67,22 @@ func Login(c *gin.Context) {
 	}
 
 	if err := c.BindJSON(&body); err != nil {
-		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
 		return
 	}
 
 	user, err := getUserByEmail(body.Email)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
 	if user.Email != body.Email || user.Password != body.Password {
-		c.IndentedJSON(http.StatusBadRequest, responses.DefaultResponse{Status: http.StatusBadRequest, Message: "error", Data: map[string]interface{}{"data": "Email or password incorrect."}})
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, "Email or password incorrect.")
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, responses.DefaultResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": user}})
-
+	responses.Send(c, http.StatusOK, responses.SUCCESS, user)
 }
 
 func GetUserByEmail(c *gin.Context) {
@@ -92,16 +91,16 @@ func GetUserByEmail(c *gin.Context) {
 
 	user, err := getUserByEmail(email)
 	if err != nil {
-		c.IndentedJSON(http.StatusInternalServerError, responses.DefaultResponse{Status: http.StatusInternalServerError, Message: "error", Data: map[string]interface{}{"data": err.Error()}})
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
 	if user.Email != email {
-		c.IndentedJSON(http.StatusNotFound, responses.DefaultResponse{Status: http.StatusNotFound, Message: "error", Data: map[string]interface{}{"data": "User with email " + email + " not found."}})
+		responses.Send(c, http.StatusNotFound, responses.ERROR, "User with email "+email+" not found.")
 		return
 	}
 
-	c.IndentedJSON(http.StatusOK, responses.DefaultResponse{Status: http.StatusOK, Message: "success", Data: map[string]interface{}{"data": user}})
+	responses.Send(c, http.StatusOK, responses.SUCCESS, user)
 }
 
 func getUserByEmail(email string) (models.User, error) {

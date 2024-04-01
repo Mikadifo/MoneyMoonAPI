@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	"mikadifo/money-moon/src/config"
 	"mikadifo/money-moon/src/models"
 	"mikadifo/money-moon/src/responses"
@@ -71,6 +72,11 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	if body.Email == "" || body.Password == "" {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, "Email and/or is empty.")
+		return
+	}
+
 	user, err := getUserByEmail(body.Email)
 	if err != nil {
 		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
@@ -82,7 +88,11 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	responses.Send(c, http.StatusOK, responses.SUCCESS, user)
+	responseData := bson.M{
+		"token": "TODO:here goes encrypted jwt token",
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, responseData)
 }
 
 func GetUserByEmail(c *gin.Context) {

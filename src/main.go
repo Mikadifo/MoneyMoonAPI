@@ -2,6 +2,7 @@ package main
 
 import (
 	"mikadifo/money-moon/src/config"
+	"mikadifo/money-moon/src/middleware"
 	"mikadifo/money-moon/src/routes"
 	"mikadifo/money-moon/src/utily"
 	"net/http"
@@ -17,6 +18,7 @@ func main() {
 	PORT := utily.GetEnvVar("PORT")
 
 	router := gin.Default()
+	router.Use(middleware.LocalCors())
 	config.ConnectDB()
 
 	router.GET("/", ping)

@@ -8,4 +8,5 @@ import (
 
 func TransactionRoute(router *gin.Engine) {
 	router.GET("/transactions/:bankId", controllers.GetAllTransactionsByBankId)
+	router.POST("/transactions/create", controllers.CreateTransaction)
 }

@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	"mikadifo/money-moon/src/config"
+	"mikadifo/money-moon/src/encryption"
 	"mikadifo/money-moon/src/models"
 	"mikadifo/money-moon/src/responses"
 	"net/http"
@@ -47,7 +47,8 @@ func CreateUser(c *gin.Context) {
 	newUser = models.User{
 		Username: user.Username,
 		Email:    user.Email,
-		Password: user.Password,
+		Password: encryption.HashPassword(user.Password),
+		Token:    "TODO:implementtokenhere",
 		Banks:    []string{},
 		Debts:    []models.Debt{},
 	}
@@ -83,13 +84,14 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	if user.Email != body.Email || user.Password != body.Password {
+	passwordIsValid := encryption.VerifyPassword(user.Password, body.Password)
+	if user.Email != body.Email || !passwordIsValid {
 		responses.Send(c, http.StatusBadRequest, responses.ERROR, "Email or password incorrect.")
 		return
 	}
 
 	responseData := bson.M{
-		"token": "TODO:here goes encrypted jwt token",
+		"token": user.Token,
 	}
 
 	responses.Send(c, http.StatusOK, responses.SUCCESS, responseData)

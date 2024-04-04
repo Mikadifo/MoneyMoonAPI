@@ -53,13 +53,17 @@ func CreateUser(c *gin.Context) {
 		Debts:    []models.Debt{},
 	}
 
-	result, err := userCollection.InsertOne(ctx, newUser)
+	_, err = userCollection.InsertOne(ctx, newUser)
 	if err != nil {
 		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
-	responses.Send(c, http.StatusCreated, responses.SUCCESS, result)
+	responseData := bson.M{
+		"token": newUser.Token,
+	}
+
+	responses.Send(c, http.StatusCreated, responses.SUCCESS, responseData)
 }
 
 func Login(c *gin.Context) {

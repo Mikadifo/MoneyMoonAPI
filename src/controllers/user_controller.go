@@ -6,11 +6,13 @@ import (
 	"mikadifo/money-moon/src/encryption"
 	"mikadifo/money-moon/src/models"
 	"mikadifo/money-moon/src/responses"
+	"mikadifo/money-moon/src/utily"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
+	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
@@ -48,7 +50,6 @@ func CreateUser(c *gin.Context) {
 		Username: user.Username,
 		Email:    user.Email,
 		Password: encryption.HashPassword(user.Password),
-		Token:    "TODO:implementtokenhere",
 		Banks:    []string{},
 		Debts:    []models.Debt{},
 	}
@@ -59,11 +60,7 @@ func CreateUser(c *gin.Context) {
 		return
 	}
 
-	responseData := bson.M{
-		"token": newUser.Token,
-	}
-
-	responses.Send(c, http.StatusCreated, responses.SUCCESS, responseData)
+	responses.Send(c, http.StatusCreated, responses.SUCCESS, bson.M{})
 }
 
 func Login(c *gin.Context) {
@@ -94,10 +91,19 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	responseData := bson.M{
-		"token": user.Token,
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"sub": user.Id.Hex(),
+		"exp": time.Now().Add(time.Hour * 24 * 30).Unix(),
+	})
+	secret := utily.GetEnvVar("SECRET")
+	tokenString, err := token.SignedString([]byte(secret))
+	if err != nil {
+		tokenString = ""
 	}
 
+	responseData := bson.M{
+		"token": tokenString,
+	}
 	responses.Send(c, http.StatusOK, responses.SUCCESS, responseData)
 }
 

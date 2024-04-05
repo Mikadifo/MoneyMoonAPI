@@ -14,6 +14,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v5"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -131,6 +132,27 @@ func getUserByEmail(email string) (models.User, error) {
 	defer cancel()
 
 	err := userCollection.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return models.User{}, nil
+		}
+
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
+func GetUserByID(id string) (models.User, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	var user models.User
+	defer cancel()
+	userId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return models.User{}, err
+	}
+
+	err = userCollection.FindOne(ctx, bson.M{"_id": userId}).Decode(&user)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
 			return models.User{}, nil

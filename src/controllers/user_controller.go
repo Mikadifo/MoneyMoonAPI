@@ -16,6 +16,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var userCollection *mongo.Collection = config.GetCollection(config.MongoClient, "Users")
@@ -124,6 +125,32 @@ func GetUserByEmail(c *gin.Context) {
 	}
 
 	responses.Send(c, http.StatusOK, responses.SUCCESS, user)
+}
+
+func GetUserBanks(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	var banks []models.Bank
+	userId, exists := c.Get("userId")
+	defer cancel()
+	if !exists || userId == "" {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, "We couldn't find user's ID in the token.")
+		return
+	}
+
+	projection := bson.M{"_id": 1, "name": 1}
+	opts := options.Find().SetProjection(projection)
+	cursor, err := bankCollection.Find(ctx, bson.M{"userId": userId}, opts)
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	if err = cursor.All(ctx, &banks); err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, banks)
 }
 
 func getUserByEmail(email string) (models.User, error) {

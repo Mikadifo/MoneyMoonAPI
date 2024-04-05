@@ -52,6 +52,7 @@ func RequireAuth(c *gin.Context) {
 			return
 		}
 
+		c.Set("userId", user.Id.Hex())
 		c.Next()
 	} else {
 		responses.Unauthorized(c)

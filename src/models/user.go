@@ -5,10 +5,10 @@ import (
 )
 
 type User struct {
-	Id       primitive.ObjectID `bson:"_id,omitempty"`
-	Username string             `bson:"username,omitempty" validate:"required"`
-	Email    string             `bson:"email,omitempty" validate:"required"`
-	Password string             `bson:"password,omitempty" validate:"required"`
-	Banks    []string           `bson:"banks"`
-	Debts    []Debt             `bson:"debts"`
+	Id       primitive.ObjectID `bson:"_id" json:"id,omitempty"`
+	Username string             `json:"username,omitempty" validate:"required"`
+	Email    string             `json:"email,omitempty" validate:"required"`
+	Password string             `json:"password,omitempty" validate:"required"`
+	Banks    []string           `json:"banks"`
+	Debts    []Debt             `json:"debts"`
 }

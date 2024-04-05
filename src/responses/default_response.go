@@ -16,5 +16,5 @@ func Send(c *gin.Context, status int, message Message, data interface{}) {
 		Message: message.String(),
 		Data:    data,
 	}
-	c.IndentedJSON(status, response)
+	c.JSON(status, response)
 }

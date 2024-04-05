@@ -10,5 +10,6 @@ import (
 func UserRoute(router *gin.Engine) {
 	router.POST("/signup", controllers.CreateUser)
 	router.POST("/login", controllers.Login)
+	router.GET("/user/banks", middleware.RequireAuth, controllers.GetUserBanks)
 	router.GET("/user/:email", middleware.RequireAuth, controllers.GetUserByEmail)
 }

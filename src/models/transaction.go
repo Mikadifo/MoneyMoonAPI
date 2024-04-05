@@ -3,10 +3,10 @@ package models
 import "go.mongodb.org/mongo-driver/bson/primitive"
 
 type Transaction struct {
-	Id          primitive.ObjectID `bson:"_id,omitempty"`
-	BankId      string             `bson:"bankId,omitempty" validate:"required"`
-	Type        string             `bson:"type,omitempty" validate:"required"`
-	Description string             `bson:"description,omitempty" validate:"required"`
-	Amount      float64            `bson:"amount,omitempty" validate:"required"`
-	Date        string             `bson:"date,omitempty" validate:"required"`
+	Id          primitive.ObjectID `bson:"_id" json:"id,omitempty"`
+	BankId      string             `json:"bankId,omitempty" validate:"required"`
+	Type        string             `json:"type,omitempty" validate:"required"`
+	Description string             `json:"description,omitempty" validate:"required"`
+	Amount      float64            `json:"amount,omitempty" validate:"required"`
+	Date        string             `json:"date,omitempty" validate:"required"`
 }

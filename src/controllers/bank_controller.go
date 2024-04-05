@@ -18,21 +18,21 @@ var bankCollection *mongo.Collection = config.GetCollection(config.MongoClient, 
 
 func CreateBank(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	var bank models.Bank
+	var body models.Bank
 	var banks []models.Bank
 	defer cancel()
 
-	if err := c.BindJSON(&bank); err != nil {
+	if err := c.BindJSON(&body); err != nil {
 		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
 		return
 	}
 
-	if validationError := validate.Struct(&bank); validationError != nil {
+	if validationError := validate.Struct(&body); validationError != nil {
 		responses.Send(c, http.StatusBadRequest, responses.ERROR, validationError.Error())
 		return
 	}
 
-	cursor, err := bankCollection.Find(ctx, bson.M{"userId": bank.UserId})
+	cursor, err := bankCollection.Find(ctx, bson.M{"userId": body.UserId})
 	if err != nil {
 		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
@@ -44,19 +44,19 @@ func CreateBank(c *gin.Context) {
 	}
 
 	for _, bankObj := range banks {
-		if bankObj.Name == bankObj.Name {
-			responses.Send(c, http.StatusConflict, responses.ERROR, "Bank with name "+bank.Name+" already exists")
+		if bankObj.Name == body.Name {
+			responses.Send(c, http.StatusConflict, responses.ERROR, "Bank with name "+body.Name+" already exists")
 			return
 		}
 	}
 
-	result, err := bankCollection.InsertOne(ctx, bank)
+	result, err := bankCollection.InsertOne(ctx, body)
 	if err != nil {
 		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
-	user, err := GetUserByID(bank.UserId)
+	user, err := GetUserByID(body.UserId)
 	if err != nil || user.Email == "" {
 		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return

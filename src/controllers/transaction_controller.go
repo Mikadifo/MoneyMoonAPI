@@ -11,6 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 var transactionsCollection *mongo.Collection = config.GetCollection(config.MongoClient, "Transactions")
@@ -45,7 +46,9 @@ func GetAllTransactionsByBankId(c *gin.Context) {
 	var transactions []models.Transaction
 	defer cancel()
 
-	cursor, err := transactionsCollection.Find(ctx, bson.M{"bankId": bankId})
+	projection := bson.M{"_id": 0}
+	opts := options.Find().SetProjection(projection)
+	cursor, err := transactionsCollection.Find(ctx, bson.M{"bankId": bankId}, opts)
 	if err != nil {
 		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return

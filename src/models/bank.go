@@ -1,7 +1,9 @@
 package models
 
+import "go.mongodb.org/mongo-driver/bson/primitive"
+
 type Bank struct {
-	Id     string `bson:"_id,omitempty"`
-	Name   string `bson:"name,omitempty" validate:"required"`
-	UserId string `bson:"userId,omitempty" validate:"required"`
+	Id     primitive.ObjectID `bson:"_id,omitempty"`
+	Name   string             `bson:"name,omitempty" validate:"required"`
+	UserId string             `bson:"userId,omitempty" validate:"required"`
 }

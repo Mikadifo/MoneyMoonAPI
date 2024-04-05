@@ -56,6 +56,23 @@ func CreateBank(c *gin.Context) {
 		return
 	}
 
+	user, err := GetUserByID(bank.UserId)
+	if err != nil || user.Email == "" {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	bankId := result.InsertedID
+	stringBankId := bankId.(primitive.ObjectID).Hex()
+	user.Banks = append(user.Banks, stringBankId)
+	filter := bson.M{"_id": user.Id}
+	update := bson.M{"$set": bson.M{"banks": user.Banks}}
+	_, err = userCollection.UpdateOne(ctx, filter, update)
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
 	responses.Send(c, http.StatusCreated, responses.SUCCESS, result)
 }
 

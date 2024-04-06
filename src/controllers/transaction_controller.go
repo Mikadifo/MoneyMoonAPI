@@ -16,28 +16,56 @@ import (
 
 var transactionsCollection *mongo.Collection = config.GetCollection(config.MongoClient, "Transactions")
 
-func CreateTransaction(c *gin.Context) {
+func CreateTransactions(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	var transaction models.Transaction
+	var body []models.Transaction
+	var transactions = []interface{}{}
+	var invalidTransactions []models.Transaction
+	var errors []string
 	defer cancel()
 
-	if err := c.BindJSON(&transaction); err != nil {
+	if err := c.BindJSON(&body); err != nil {
 		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
 		return
 	}
 
-	if validationError := validate.Struct(&transaction); validationError != nil {
-		responses.Send(c, http.StatusBadRequest, responses.ERROR, validationError.Error())
+	for _, transaction := range body {
+		if validationError := validate.Struct(&transaction); validationError != nil {
+			invalidTransactions = append(invalidTransactions, transaction)
+			errors = append(errors, validationError.Error())
+			continue
+		}
+
+		transactions = append(transactions, transaction)
+	}
+
+	responseData := bson.M{
+		"failed": invalidTransactions,
+		"errors": errors,
+	}
+	if len(transactions) == 0 {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, responseData)
 		return
 	}
 
-	result, err := transactionsCollection.InsertOne(ctx, transaction)
+	result, err := transactionsCollection.InsertMany(ctx, transactions)
 	if err != nil {
 		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return
 	}
 
-	responses.Send(c, http.StatusCreated, responses.SUCCESS, result)
+	responseData = bson.M{
+		"insertedCount": len(result.InsertedIDs),
+		"failed":        invalidTransactions,
+		"failedCount":   len(invalidTransactions),
+		"errors":        errors,
+	}
+	if len(invalidTransactions) > 0 {
+		responses.Send(c, http.StatusMultiStatus, responses.PARTIAL, responseData)
+		return
+	}
+
+	responses.Send(c, http.StatusCreated, responses.SUCCESS, bson.M{"insertedCount": len(result.InsertedIDs)})
 }
 
 func GetAllTransactionsByBankId(c *gin.Context) {

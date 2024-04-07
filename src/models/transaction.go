@@ -9,5 +9,5 @@ type Transaction struct {
 	Type        string             `json:"type,omitempty" validate:"required"`
 	Description string             `json:"description,omitempty" validate:"required"`
 	Amount      float64            `json:"amount,omitempty" validate:"required"`
-	Balance     float64            `json:"balance,omitempty" validate:"required"`
+	Balance     *float64           `json:"balance" validate:"required"`
 }

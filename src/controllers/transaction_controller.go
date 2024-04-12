@@ -12,6 +12,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -38,6 +39,14 @@ func CreateTransactions(c *gin.Context) {
 			continue
 		}
 
+		dateTime, err := time.Parse("01/02/06", transaction.Date)
+		if err != nil {
+			invalidTransactions = append(invalidTransactions, transaction)
+			errors = append(errors, "Invalid date format")
+			continue
+		}
+
+		transaction.DateObject = primitive.NewDateTimeFromTime(dateTime)
 		transactions = append(transactions, transaction)
 	}
 
@@ -107,6 +116,7 @@ func GetTransactionsByBankId(c *gin.Context) {
 	projection := bson.M{"_id": 0}
 	findOptions := options.FindOptions{Limit: &limit, Skip: &skip}
 	findOptions.SetProjection(projection)
+	findOptions.SetSort(bson.M{"dateObject": -1})
 	cursor, err := transactionsCollection.Find(ctx, filter, &findOptions)
 	if err != nil {
 		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())

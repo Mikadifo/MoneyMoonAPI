@@ -13,6 +13,27 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+func GetUnpaidDebts(c *gin.Context) {
+	userId, exists := c.Get("userId")
+	if !exists || userId == "" {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, "We couldn't find user's ID in the token.")
+		return
+	}
+
+	user, err := GetUserByID(userId.(string))
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	if user.Id.Hex() != userId {
+		responses.Send(c, http.StatusNotFound, responses.ERROR, "User not found")
+		return
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, user.Debts)
+}
+
 func CreateDebt(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	var debt models.Debt

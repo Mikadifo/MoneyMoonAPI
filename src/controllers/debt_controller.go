@@ -116,8 +116,6 @@ func PayAmount(c *gin.Context) {
 		return
 	}
 
-	//TODO ADD ammount
-
 	filter := bson.M{"_id": userObjId, "debts.name": debtName}
 	update := bson.M{"$inc": bson.M{"debts.$.payed": amount}}
 	_, err = userCollection.UpdateOne(ctx, filter, update)

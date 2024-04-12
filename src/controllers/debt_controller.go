@@ -31,7 +31,14 @@ func GetUnpaidDebts(c *gin.Context) {
 		return
 	}
 
-	responses.Send(c, http.StatusOK, responses.SUCCESS, user.Debts)
+	var unpaidDebts []models.Debt
+	for _, debt := range user.Debts {
+		if debt.Amount-*debt.Payed > 0 {
+			unpaidDebts = append(unpaidDebts, debt)
+		}
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, unpaidDebts)
 }
 
 func CreateDebt(c *gin.Context) {

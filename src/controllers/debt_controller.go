@@ -155,3 +155,44 @@ func PayAmount(c *gin.Context) {
 
 	responses.Send(c, http.StatusOK, responses.SUCCESS, "Debt updated")
 }
+
+func DeleteDebt(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	debtName := c.Param("debtName")
+	var debt models.Debt
+	userId, exists := c.Get("userId")
+	defer cancel()
+
+	if !exists || userId == "" {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, "We couldn't find user's ID in the token.")
+		return
+	}
+
+	user, err := GetUserByID(userId.(string))
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	if user.Id.Hex() != userId {
+		responses.Send(c, http.StatusNotFound, responses.ERROR, "User not found")
+		return
+	}
+
+	for _, debtObj := range user.Debts {
+		if debtObj.Name == debtName {
+			debt = debtObj
+			break
+		}
+	}
+
+	update := bson.M{"$pull": bson.M{"debts": debt}}
+	_, err = userCollection.UpdateByID(ctx, user.Id, update)
+
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, "Debt successfully removed")
+}

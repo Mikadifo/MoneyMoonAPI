@@ -26,6 +26,7 @@ func main() {
 	routes.TransactionRoute(router)
 	routes.BankRoute(router)
 	routes.DebtRoute(router)
+	routes.GroupRoute(router)
 
 	router.Run("localhost:" + PORT)
 }

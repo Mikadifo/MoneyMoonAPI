@@ -9,4 +9,5 @@ import (
 
 func GroupRoute(router *gin.Engine) {
 	router.GET("/groups", middleware.RequireAuth, controllers.GetAllGroups)
+	router.PUT("/groups/add/:groupId", middleware.RequireAuth, controllers.AddTransactions)
 }

@@ -113,9 +113,7 @@ func GetTransactionsByBankId(c *gin.Context) {
 	}
 
 	skip := int64((page - 1) * limit)
-	projection := bson.M{"_id": 0}
 	findOptions := options.FindOptions{Limit: &limit, Skip: &skip}
-	findOptions.SetProjection(projection)
 	findOptions.SetSort(bson.M{"dateObject": -1})
 	cursor, err := transactionsCollection.Find(ctx, filter, &findOptions)
 	if err != nil {

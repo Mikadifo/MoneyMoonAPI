@@ -9,5 +9,6 @@ import (
 
 func GroupRoute(router *gin.Engine) {
 	router.GET("/groups", middleware.RequireAuth, controllers.GetAllGroups)
+	router.POST("/groups", middleware.RequireAuth, controllers.CreateGroup)
 	router.PUT("/groups/add/:groupId", middleware.RequireAuth, controllers.AddTransactions)
 }

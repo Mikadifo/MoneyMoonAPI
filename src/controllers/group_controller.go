@@ -17,6 +17,55 @@ import (
 
 var groupCollection *mongo.Collection = config.GetCollection(config.MongoClient, "Groups")
 
+func CreateGroup(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	var body struct {
+		Name string `json:"name,omitempty" validate:"required"`
+	}
+	group := models.Group{}
+	userId, exists := c.Get("userId")
+	defer cancel()
+
+	if !exists || userId == "" {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, "We couldn't find user's ID in the token.")
+		return
+	}
+
+	if err := c.BindJSON(&body); err != nil {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
+		return
+	}
+
+	if validationError := validate.Struct(&body); validationError != nil {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, validationError.Error())
+		return
+	}
+
+	groupExists, err := groupExists(body.Name)
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	if groupExists {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, "Group already exists with name "+body.Name)
+		return
+	}
+
+	group.Name = body.Name
+	group.UserId = userId.(string)
+	group.Total = 0
+	group.Transactions = []string{}
+
+	_, err = groupCollection.InsertOne(ctx, group)
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	responses.Send(c, http.StatusCreated, responses.SUCCESS, "Group saved succesfully")
+}
+
 func GetAllGroups(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	userId, exists := c.Get("userId")
@@ -28,7 +77,7 @@ func GetAllGroups(c *gin.Context) {
 		return
 	}
 
-	projection := bson.M{"_id": 0, "userId": 0}
+	projection := bson.M{"userId": 0}
 	findOptions := options.Find().SetProjection(projection)
 	cursor, err := groupCollection.Find(ctx, bson.M{"userId": userId}, findOptions)
 	if err != nil {
@@ -82,4 +131,21 @@ func AddTransactions(c *gin.Context) {
 	}
 
 	responses.Send(c, http.StatusOK, responses.SUCCESS, "Transactions added succesfully")
+}
+
+func groupExists(name string) (bool, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	var group models.Group
+	defer cancel()
+
+	err := groupCollection.FindOne(ctx, bson.M{"name": name}).Decode(&group)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return false, nil
+		}
+
+		return true, err
+	}
+
+	return true, nil
 }

@@ -130,6 +130,19 @@ func AddTransactions(c *gin.Context) {
 		return
 	}
 
+	total, err := getTotalSumOfTransactions(groupId)
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	update = bson.M{"$set": bson.M{"total": total}}
+	err = groupCollection.FindOneAndUpdate(ctx, bson.M{"_id": groupId}, update).Decode(&group)
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
 	responses.Send(c, http.StatusOK, responses.SUCCESS, "Transactions added succesfully")
 }
 
@@ -148,4 +161,33 @@ func groupExists(name string) (bool, error) {
 	}
 
 	return true, nil
+}
+
+func getTotalSumOfTransactions(groupId primitive.ObjectID) (float64, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	var group models.Group
+	var total float64 = 0
+	defer cancel()
+
+	err := groupCollection.FindOne(ctx, bson.M{"_id": groupId}).Decode(&group)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, transactionId := range group.Transactions {
+		var transaction models.Transaction
+		transactionObjId, err := primitive.ObjectIDFromHex(transactionId)
+		if err != nil {
+			return 0, err
+		}
+
+		err = transactionsCollection.FindOne(ctx, bson.M{"_id": transactionObjId}).Decode(&transaction)
+		if err != nil {
+			return 0, err
+		}
+
+		total += transaction.Amount
+	}
+
+	return total, nil
 }

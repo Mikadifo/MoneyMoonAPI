@@ -218,5 +218,13 @@ func FindTransactions(c *gin.Context) {
 		return
 	}
 
-	responses.Send(c, http.StatusOK, responses.SUCCESS, transactions)
+	responseData := bson.M{
+		"paginator": bson.M{
+			"page":  page,
+			"pages": pages,
+		},
+		"transactions": transactions,
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, responseData)
 }

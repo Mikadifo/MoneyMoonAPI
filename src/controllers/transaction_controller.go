@@ -85,8 +85,8 @@ func GetTransactionsByBankId(c *gin.Context) {
 	bankId := c.Param("bankId")
 	pageQuery := c.DefaultQuery("page", "1")
 	limitQuery := c.DefaultQuery("limit", "10")
-	var transactions []models.Transaction
 	var pages int64
+	var transactions []models.Transaction
 	filter := bson.M{"bankId": bankId}
 	defer cancel()
 
@@ -146,6 +146,9 @@ func FindTransactions(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	var transactions []models.Transaction
 	search := c.Query("search")
+	pageQuery := c.DefaultQuery("page", "1")
+	limitQuery := c.DefaultQuery("limit", "10")
+	var pages int64
 	defer cancel()
 
 	if search == "" {
@@ -173,8 +176,35 @@ func FindTransactions(c *gin.Context) {
 		"DateObject": 0,
 		"bankId":     0,
 	}
-	opts := options.Find().SetProjection(projection)
-	cursor, err := transactionsCollection.Find(ctx, filter, opts)
+
+	page, err := strconv.ParseInt(pageQuery, 10, 64)
+	if err != nil {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
+		return
+	}
+	limit, err := strconv.ParseInt(limitQuery, 10, 64)
+	if err != nil {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
+		return
+	}
+
+	count, err := transactionsCollection.CountDocuments(ctx, filter)
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+	pages = int64(math.Ceil(float64(count) / float64(limit)))
+
+	if page < 1 || page > pages || limit < 1 {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, "Page number not found or limit is not a positive number")
+		return
+	}
+
+	skip := int64((page - 1) * limit)
+	findOptions := options.FindOptions{Limit: &limit, Skip: &skip}
+	findOptions.SetSort(bson.M{"dateObject": -1})
+	findOptions.SetProjection(projection)
+	cursor, err := transactionsCollection.Find(ctx, filter, &findOptions)
 	if err != nil {
 		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
 		return

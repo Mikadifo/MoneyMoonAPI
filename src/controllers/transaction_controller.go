@@ -7,6 +7,7 @@ import (
 	"mikadifo/money-moon/src/models"
 	"mikadifo/money-moon/src/responses"
 	"net/http"
+	"regexp"
 	"strconv"
 	"time"
 
@@ -139,4 +140,50 @@ func GetTransactionsByBankId(c *gin.Context) {
 	}
 
 	responses.Send(c, http.StatusOK, responses.SUCCESS, responseData)
+}
+
+func FindTransactions(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	var transactions []models.Transaction
+	search := c.Query("search")
+	defer cancel()
+
+	if search == "" {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, "Search query not provided")
+		return
+	}
+
+	escapedSearch := regexp.QuoteMeta(search)
+	filter := bson.M{
+		"$or": []bson.M{
+			{"description": bson.M{"$regex": escapedSearch}},
+			{"type": bson.M{"$regex": escapedSearch}},
+			{"date": bson.M{"$regex": escapedSearch}},
+			{"$expr": bson.M{
+				"$regexMatch": bson.M{"input": bson.M{"$toString": "$amount"}, "regex": escapedSearch},
+			}},
+			{"$expr": bson.M{
+				"$regexMatch": bson.M{"input": bson.M{"$toString": "$balance"}, "regex": escapedSearch},
+			}},
+		},
+	}
+
+	projection := bson.M{
+		"_id":        0,
+		"DateObject": 0,
+		"bankId":     0,
+	}
+	opts := options.Find().SetProjection(projection)
+	cursor, err := transactionsCollection.Find(ctx, filter, opts)
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	if err = cursor.All(ctx, &transactions); err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, transactions)
 }

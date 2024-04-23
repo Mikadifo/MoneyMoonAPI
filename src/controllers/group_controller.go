@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"context"
+	"math"
 	"mikadifo/money-moon/src/config"
 	"mikadifo/money-moon/src/models"
 	"mikadifo/money-moon/src/responses"
@@ -188,6 +189,8 @@ func getTotalSumOfTransactions(groupId primitive.ObjectID) (float64, error) {
 
 		total += transaction.Amount
 	}
+
+	total = math.Round(total*100) / 100
 
 	return total, nil
 }

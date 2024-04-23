@@ -145,34 +145,37 @@ func GetTransactionsByBankId(c *gin.Context) {
 func FindTransactions(c *gin.Context) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	var transactions []models.Transaction
+	bankId := c.Query("bankId")
 	search := c.Query("search")
 	pageQuery := c.DefaultQuery("page", "1")
 	limitQuery := c.DefaultQuery("limit", "10")
 	var pages int64
 	defer cancel()
 
-	if search == "" {
-		responses.Send(c, http.StatusBadRequest, responses.ERROR, "Search query not provided")
+	if search == "" || bankId == "" {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, "Search query or bank id not provided")
 		return
 	}
 
 	escapedSearch := regexp.QuoteMeta(search)
 	filter := bson.M{
-		"$or": []bson.M{
-			{"description": bson.M{"$regex": escapedSearch}},
-			{"type": bson.M{"$regex": escapedSearch}},
-			{"date": bson.M{"$regex": escapedSearch}},
-			{"$expr": bson.M{
-				"$regexMatch": bson.M{"input": bson.M{"$toString": "$amount"}, "regex": escapedSearch},
-			}},
-			{"$expr": bson.M{
-				"$regexMatch": bson.M{"input": bson.M{"$toString": "$balance"}, "regex": escapedSearch},
+		"$and": []bson.M{
+			{"bankId": bankId},
+			{"$or": []bson.M{
+				{"description": bson.M{"$regex": escapedSearch}},
+				{"type": bson.M{"$regex": escapedSearch}},
+				{"date": bson.M{"$regex": escapedSearch}},
+				{"$expr": bson.M{
+					"$regexMatch": bson.M{"input": bson.M{"$toString": "$amount"}, "regex": escapedSearch},
+				}},
+				{"$expr": bson.M{
+					"$regexMatch": bson.M{"input": bson.M{"$toString": "$balance"}, "regex": escapedSearch},
+				}},
 			}},
 		},
 	}
 
 	projection := bson.M{
-		"_id":        0,
 		"DateObject": 0,
 		"bankId":     0,
 	}

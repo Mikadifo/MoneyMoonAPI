@@ -147,6 +147,68 @@ func AddTransactions(c *gin.Context) {
 	responses.Send(c, http.StatusOK, responses.SUCCESS, "Transactions added succesfully")
 }
 
+func GetTransactionsByGroupId(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	userId, exists := c.Get("userId")
+	groupIdHex := c.Param("groupId")
+	var group models.Group
+	var transactionsObjIds []primitive.ObjectID
+	var transactions []models.Transaction
+	defer cancel()
+
+	if !exists || userId == "" {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, "We couldn't find user's ID in the token.")
+		return
+	}
+
+	groupId, err := primitive.ObjectIDFromHex(groupIdHex)
+	if err != nil {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
+		return
+	}
+
+	err = groupCollection.FindOne(ctx, bson.M{"_id": groupId}).Decode(&group)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			responses.Send(c, http.StatusNotFound, responses.ERROR, "Group not found.")
+			return
+
+		}
+
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	for _, transactionId := range group.Transactions {
+		objId, err := primitive.ObjectIDFromHex(transactionId)
+		if err != nil {
+			responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+			return
+		}
+
+		transactionsObjIds = append(transactionsObjIds, objId)
+	}
+
+	filter := bson.M{"_id": bson.M{"$in": transactionsObjIds}}
+	projection := bson.M{
+		"DateObject": 0,
+		"bankId":     0,
+	}
+	opts := options.Find().SetProjection(&projection)
+	cursor, err := transactionsCollection.Find(ctx, filter, opts)
+	if err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	if err = cursor.All(ctx, &transactions); err != nil {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, transactions)
+}
+
 func groupExists(name string) (bool, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	var group models.Group

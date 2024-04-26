@@ -256,3 +256,45 @@ func getTotalSumOfTransactions(groupId primitive.ObjectID) (float64, error) {
 
 	return total, nil
 }
+
+func DeleteGroupTransaction(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	userId, exists := c.Get("userId")
+	groupIdHex := c.Param("groupId")
+	var body struct {
+		TransactionId string `json:"transactionId"`
+	}
+	var group models.Group
+	defer cancel()
+
+	if !exists || userId == "" {
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, "We couldn't find user's ID in the token.")
+		return
+	}
+
+	groupId, err := primitive.ObjectIDFromHex(groupIdHex)
+	if err != nil {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
+		return
+	}
+
+	if err := c.BindJSON(&body); err != nil {
+		responses.Send(c, http.StatusBadRequest, responses.ERROR, err.Error())
+		return
+	}
+
+	update := bson.M{"$pull": bson.M{"transactions": body.TransactionId}}
+	err = groupCollection.FindOneAndUpdate(ctx, bson.M{"_id": groupId}, update).Decode(&group)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			responses.Send(c, http.StatusNotFound, responses.ERROR, "Group not found.")
+			return
+
+		}
+
+		responses.Send(c, http.StatusInternalServerError, responses.ERROR, err.Error())
+		return
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, "Transaction deleted succesfully")
+}

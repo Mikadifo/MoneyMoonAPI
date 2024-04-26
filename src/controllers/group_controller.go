@@ -206,7 +206,12 @@ func GetTransactionsByGroupId(c *gin.Context) {
 		return
 	}
 
-	responses.Send(c, http.StatusOK, responses.SUCCESS, transactions)
+	response := bson.M{
+		"group":        group,
+		"transactions": transactions,
+	}
+
+	responses.Send(c, http.StatusOK, responses.SUCCESS, response)
 }
 
 func groupExists(name string) (bool, error) {
